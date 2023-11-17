@@ -4,6 +4,7 @@ from keras import Sequential
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
 from tensorflow import one_hot
 import matplotlib.pyplot as plt
@@ -26,6 +27,12 @@ data['Age'] = StandardScaler().fit_transform(data['Age'].to_numpy().reshape((-1,
 data = np.asarray(data).astype(np.float32)
 data[::, -1] = LabelEncoder().fit_transform(data[::, -1])
 X, y = data[::, :-1], data[::, -1]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle=True)
+
+train_len = int(X_train.shape[0] * (80 / 100))
+X_train, y_train, X_val, y_val = X_train[:train_len, ::], y_train[:train_len], X_train[train_len:, ::], y_train[
+                                                                                                        train_len:]
+
 # %% Model Building
 
 model = Sequential([
@@ -42,29 +49,28 @@ model.compile(loss=tf.keras.losses.binary_crossentropy,
               optimizer=tf.keras.optimizers.Adam(),
               metrics=['accuracy'])
 
-history = model.fit(X, y, epochs=200, shuffle=True, validation_data=(X, y), batch_size=20,
+history = model.fit(X_train, y_train, epochs=125, shuffle=True, validation_data=(X_val, y_val), batch_size=20,
                     use_multiprocessing=True)
 
 # %% Model Prediction
-y_pred = np.round(model.predict(X))
-corr, act = y_pred.sum(), y.sum()
-print(corr, act)
-print(y_pred.sum() == y.sum())
+y_pred = np.round(model.predict(X_test))
 
 # %% Plotting the Accuracy and Validation Accuracy Scores
 val_accuracy, accuracy = history.history['val_accuracy'], history.history['accuracy']
-confusion_mat = confusion_matrix(y, y_pred)
+confusion_mat = confusion_matrix(y_test, y_pred)
 sns.heatmap(confusion_mat, annot=True, fmt='d')
 plt.xlabel('Actual')
 plt.ylabel('Predicted')
 plt.show()
+
+# %%
 plt.plot(accuracy)
 plt.plot(val_accuracy)
 plt.legend(['Accuracy', 'Validation Accuracy'])
 plt.xlabel('Number of Epoch')
 plt.ylabel('Score')
-plt.show()
+# plt.show()
 
-print(matthews_corrcoef(y, y_pred))
+print(matthews_corrcoef(y_test, y_pred))
 
 # %%
