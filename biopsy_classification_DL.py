@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, matthews_corrcoef
 
-# %% Preprocessing
+# %% Preprocessing HELLO WORLD TEST
 
 data = pd.read_csv("D:/Datasets/Biopsy/biopsy.csv")
 data.drop(data.columns[[26, 27]], inplace=True, axis=1)
